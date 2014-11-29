@@ -18173,6 +18173,7 @@ module.exports = Scrollview;
  */
 
 var OptionsManager = _dereq_('../core/OptionsManager');
+var Entity = _dereq_('../core/Entity');
 var Transform = _dereq_('../core/Transform');
 var ViewSequence = _dereq_('../core/ViewSequence');
 var Utility = _dereq_('../utilities/Utility');
@@ -18195,6 +18196,9 @@ function SequentialLayout(options) {
     this.options = Utility.clone(this.constructor.DEFAULT_OPTIONS || SequentialLayout.DEFAULT_OPTIONS);
     this.optionsManager = new OptionsManager(this.options);
 
+    this.id = Entity.register(this);
+    this.cachedSize = [undefined, undefined];
+
     if (options) this.setOptions(options);
 }
 
@@ -18206,6 +18210,7 @@ SequentialLayout.DEFAULT_OPTIONS = {
 SequentialLayout.DEFAULT_OUTPUT_FUNCTION = function DEFAULT_OUTPUT_FUNCTION(input, offset, index) {
     var transform = (this.options.direction === Utility.Direction.X) ? Transform.translate(offset, 0) : Transform.translate(0, offset);
     return {
+        size: this.cachedSize,
         transform: transform,
         target: input.render()
     };
@@ -18262,13 +18267,25 @@ SequentialLayout.prototype.setOutputFunction = function setOutputFunction(output
 };
 
 /**
- * Generate a render spec from the contents of this component.
+ * Return the id of the component
  *
  * @private
  * @method render
- * @return {number} Render spec for this component
+ * @return {number} id of the SequentialLayout
  */
 SequentialLayout.prototype.render = function render() {
+    return this.id;
+};
+
+/**
+ * Generate a render spec from the contents of this component.
+ *
+ * @private
+ * @method commit
+ * @param {Object} parentSpec parent render spec
+ * @return {Object} Render spec for this component
+ */
+SequentialLayout.prototype.commit = function commit(parentSpec) {
     var length             = 0;
     var secondaryDirection = this.options.direction ^ 1;
     var currentNode        = this._items;
@@ -18279,6 +18296,7 @@ SequentialLayout.prototype.render = function render() {
     var i                  = 0;
 
     this._size = [0, 0];
+    this.cachedSize = parentSpec.size;
 
     while (currentNode) {
         item = currentNode.get();
@@ -18303,13 +18321,15 @@ SequentialLayout.prototype.render = function render() {
     this._size[this.options.direction] = length;
 
     return {
+        transform: parentSpec.transform,
+        origin: parentSpec.origin,
         size: this.getSize(),
         target: result
     };
 };
 
 module.exports = SequentialLayout;
-},{"../core/OptionsManager":10,"../core/Transform":15,"../core/ViewSequence":17,"../utilities/Utility":95}],111:[function(_dereq_,module,exports){
+},{"../core/Entity":5,"../core/OptionsManager":10,"../core/Transform":15,"../core/ViewSequence":17,"../utilities/Utility":95}],111:[function(_dereq_,module,exports){
 module.exports = {
   ContextualView: _dereq_('./ContextualView'),
   Deck: _dereq_('./Deck'),
